@@ -164,17 +164,11 @@ class PulseWidget : AppWidgetProvider() {
             views.setTextViewText(R.id.weekly_reset, "")
             views.setTextColor(R.id.weekly_pct, COLOR_RED)
 
-            views.setProgressBar(R.id.sonnet_bar, 100, 0, false)
-            views.setTextViewText(R.id.sonnet_pct, "\u2014")
-            views.setTextViewText(R.id.sonnet_reset, "")
-            views.setTextColor(R.id.sonnet_pct, COLOR_RED)
-
             return views
         }
 
         val sessionPct = data.fiveHourUtilization.toInt().coerceIn(0, 100)
         val weeklyPct = data.sevenDayUtilization.toInt().coerceIn(0, 100)
-        val sonnetPct = data.sonnetUtilization.toInt().coerceIn(0, 100)
 
         // Header
         if (data.planLabel.isNotEmpty()) {
@@ -199,18 +193,6 @@ class PulseWidget : AppWidgetProvider() {
         views.setTextColor(R.id.weekly_pct, getColor(weeklyPct))
         setBarTint(views, R.id.weekly_bar, weeklyPct)
 
-        // Sonnet
-        views.setProgressBar(R.id.sonnet_bar, 100, sonnetPct, false)
-        views.setTextViewText(R.id.sonnet_pct, "${sonnetPct}%")
-        val sonnetResetText = if (data.sonnetResetsAt.isNullOrEmpty() || data.sonnetResetsAt == "null") {
-            "No active limit"
-        } else {
-            formatResetTime(data.sonnetResetsAt)
-        }
-        views.setTextViewText(R.id.sonnet_reset, sonnetResetText)
-        views.setTextColor(R.id.sonnet_pct, getColor(sonnetPct))
-        setBarTint(views, R.id.sonnet_bar, sonnetPct)
-
         return views
     }
 
@@ -219,7 +201,6 @@ class PulseWidget : AppWidgetProvider() {
 
         val sessionPct = data.fiveHourUtilization.toInt().coerceIn(0, 100)
         val weeklyPct = data.sevenDayUtilization.toInt().coerceIn(0, 100)
-        val sonnetPct = data.sonnetUtilization.toInt().coerceIn(0, 100)
 
         views.setProgressBar(R.id.five_hour_bar, 100, sessionPct, false)
         views.setTextViewText(R.id.five_hour_pct, "${sessionPct}%")
@@ -230,11 +211,6 @@ class PulseWidget : AppWidgetProvider() {
         views.setTextViewText(R.id.weekly_pct, "${weeklyPct}%")
         views.setTextColor(R.id.weekly_pct, getColor(weeklyPct))
         setBarTint(views, R.id.weekly_bar, weeklyPct)
-
-        views.setProgressBar(R.id.sonnet_bar, 100, sonnetPct, false)
-        views.setTextViewText(R.id.sonnet_pct, "${sonnetPct}%")
-        views.setTextColor(R.id.sonnet_pct, getColor(sonnetPct))
-        setBarTint(views, R.id.sonnet_bar, sonnetPct)
 
         return views
     }
