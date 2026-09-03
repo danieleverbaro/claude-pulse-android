@@ -5,14 +5,14 @@
     android:layout_height="match_parent"
     android:orientation="vertical"
     android:background="@drawable/widget_background"
-    android:padding="12dp">
+    android:padding="10dp">
 
     <!-- Header row -->
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="horizontal"
-        android:layout_marginBottom="4dp">
+        android:layout_marginBottom="6dp">
 
         <TextView
             android:layout_width="wrap_content"
@@ -68,7 +68,7 @@
                 android:id="@+id/five_hour_bar"
                 style="?android:attr/progressBarStyleHorizontal"
                 android:layout_width="0dp"
-                android:layout_height="8dp"
+                android:layout_height="10dp"
                 android:layout_weight="1"
                 android:max="100"
                 android:progress="0"
@@ -92,9 +92,11 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:text=""
-            android:textColor="#66FFFFFF"
-            android:textSize="9sp"
-            android:paddingStart="62dp" />
+            android:textColor="#B3FFFFFF"
+            android:textSize="11sp"
+            android:textStyle="bold"
+            android:paddingStart="62dp"
+            android:layout_marginTop="1dp" />
     </LinearLayout>
 
     <!-- Weekly section (weighted) -->
@@ -122,7 +124,7 @@
                 android:id="@+id/weekly_bar"
                 style="?android:attr/progressBarStyleHorizontal"
                 android:layout_width="0dp"
-                android:layout_height="8dp"
+                android:layout_height="10dp"
                 android:layout_weight="1"
                 android:max="100"
                 android:progress="0"
@@ -146,9 +148,10 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:text=""
-            android:textColor="#66FFFFFF"
-            android:textSize="9sp"
-            android:paddingStart="62dp" />
+            android:textColor="#99FFFFFF"
+            android:textSize="10sp"
+            android:paddingStart="62dp"
+            android:layout_marginTop="1dp" />
     </LinearLayout>
 
     <!-- Footer: Refresh Now | Usage Page -->

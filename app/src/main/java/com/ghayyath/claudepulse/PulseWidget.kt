@@ -85,15 +85,19 @@ class PulseWidget : AppWidgetProvider() {
         val hasAuthError = prefs.getBoolean("auth_error", false)
         val options = appWidgetManager.getAppWidgetOptions(appWidgetId)
         val minWidth = options.getInt(AppWidgetManager.OPTION_APPWIDGET_MIN_WIDTH, 250)
-        val isCompact = minWidth < 200
+        val minHeight = options.getInt(AppWidgetManager.OPTION_APPWIDGET_MIN_HEIGHT, 110)
+        // Resized down to a single row: full/compact layouts get clipped and hide the
+        // reset countdown, so fall back to a one-line layout that always shows it.
+        val isTiny = minHeight < 100
+        val isCompact = !isTiny && minWidth < 200
 
-        val views = if (isCompact) {
-            buildCompactViews(context, data)
-        } else {
-            buildFullViews(context, data, hasAuthError)
+        val views = when {
+            isTiny -> buildTinyViews(context, data)
+            isCompact -> buildCompactViews(context, data)
+            else -> buildFullViews(context, data, hasAuthError)
         }
 
-        if (!isCompact) {
+        if (!isCompact && !isTiny) {
             if (hasAuthError) {
                 // Tap widget body -> open SetupActivity for token recovery
                 val setupIntent = Intent(context, SetupActivity::class.java)
@@ -204,13 +208,31 @@ class PulseWidget : AppWidgetProvider() {
 
         views.setProgressBar(R.id.five_hour_bar, 100, sessionPct, false)
         views.setTextViewText(R.id.five_hour_pct, "${sessionPct}%")
+        views.setTextViewText(R.id.five_hour_reset, formatResetTime(data.fiveHourResetsAt))
         views.setTextColor(R.id.five_hour_pct, getColor(sessionPct))
         setBarTint(views, R.id.five_hour_bar, sessionPct)
 
         views.setProgressBar(R.id.weekly_bar, 100, weeklyPct, false)
         views.setTextViewText(R.id.weekly_pct, "${weeklyPct}%")
+        views.setTextViewText(R.id.weekly_reset, formatResetTime(data.sevenDayResetsAt))
         views.setTextColor(R.id.weekly_pct, getColor(weeklyPct))
         setBarTint(views, R.id.weekly_bar, weeklyPct)
+
+        return views
+    }
+
+    private fun buildTinyViews(context: Context, data: UsageData): RemoteViews {
+        val views = RemoteViews(context.packageName, R.layout.widget_layout_tiny)
+
+        val sessionPct = data.fiveHourUtilization.toInt().coerceIn(0, 100)
+        val weeklyPct = data.sevenDayUtilization.toInt().coerceIn(0, 100)
+
+        views.setTextViewText(R.id.five_hour_pct, "${sessionPct}%")
+        views.setTextColor(R.id.five_hour_pct, getColor(sessionPct))
+        views.setTextViewText(R.id.five_hour_reset, formatResetTimeShort(data.fiveHourResetsAt))
+
+        views.setTextViewText(R.id.weekly_pct, "${weeklyPct}%")
+        views.setTextColor(R.id.weekly_pct, getColor(weeklyPct))
 
         return views
     }
@@ -239,6 +261,28 @@ class PulseWidget : AppWidgetProvider() {
                 "Resets in ${days}d ${remHours}h"
             } else {
                 "Resets in ${hours}h ${minutes}m"
+            }
+        } catch (e: Exception) {
+            ""
+        }
+    }
+
+    /** Compact "3h20m" / "1d 4h" form for the single-row layout — no width for "Resets in ...". */
+    private fun formatResetTimeShort(isoTime: String?): String {
+        if (isoTime.isNullOrEmpty() || isoTime == "null") return ""
+        return try {
+            val sdf = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss", Locale.US)
+            sdf.timeZone = TimeZone.getTimeZone("UTC")
+            val cleaned = isoTime.replace(Regex("[+-]\\d{2}:\\d{2}$"), "").replace("Z", "")
+            val resetDate = sdf.parse(cleaned) ?: return ""
+            val diffMs = resetDate.time - System.currentTimeMillis()
+            if (diffMs <= 0) return "resetting…"
+            val hours = (diffMs / 3_600_000).toInt()
+            val minutes = ((diffMs % 3_600_000) / 60_000).toInt()
+            if (hours >= 24) {
+                "↻ ${hours / 24}d ${hours % 24}h"
+            } else {
+                "↻ ${hours}h ${minutes}m"
             }
         } catch (e: Exception) {
             ""

@@ -13,8 +13,7 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="horizontal"
-        android:gravity="center_vertical"
-        android:layout_marginBottom="4dp">
+        android:gravity="center_vertical">
 
         <ProgressBar
             android:id="@+id/five_hour_bar"
@@ -38,13 +37,22 @@
             android:gravity="end" />
     </LinearLayout>
 
+    <TextView
+        android:id="@+id/five_hour_reset"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text=""
+        android:textColor="#B3FFFFFF"
+        android:textSize="10sp"
+        android:textStyle="bold"
+        android:layout_marginBottom="4dp" />
+
     <!-- Weekly -->
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="horizontal"
-        android:gravity="center_vertical"
-        android:layout_marginBottom="4dp">
+        android:gravity="center_vertical">
 
         <ProgressBar
             android:id="@+id/weekly_bar"
@@ -67,5 +75,13 @@
             android:textStyle="bold"
             android:gravity="end" />
     </LinearLayout>
+
+    <TextView
+        android:id="@+id/weekly_reset"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text=""
+        android:textColor="#99FFFFFF"
+        android:textSize="9sp" />
 
 </LinearLayout>
