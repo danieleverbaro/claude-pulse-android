@@ -1,13 +1,17 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:background="#1A1A1A">
+
+<LinearLayout
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
     android:orientation="vertical"
     android:paddingLeft="32dp"
     android:paddingRight="32dp"
     android:paddingTop="64dp"
-    android:paddingBottom="32dp"
-    android:background="#1A1A1A">
+    android:paddingBottom="32dp">
 
     <TextView
         android:layout_width="wrap_content"
@@ -21,12 +25,22 @@
     <TextView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="Paste your access token or refresh token"
+        android:text="Paste a Claude or a Codex token — one at a time. The provider is detected from the token itself."
         android:textColor="#AAAAAA"
         android:textSize="14sp"
-        android:layout_marginBottom="32dp" />
+        android:layout_marginBottom="24dp" />
 
-    <!-- Error banner - shown when token is expired/invalid -->
+    <TextView
+        android:id="@+id/status_text"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:textColor="#AAAAAA"
+        android:textSize="13sp"
+        android:lineSpacingExtra="4dp"
+        android:layout_marginBottom="24dp"
+        android:visibility="gone" />
+
+    <!-- Shown when at least one provider needs a fresh token -->
     <LinearLayout
         android:id="@+id/error_banner"
         android:layout_width="match_parent"
@@ -40,7 +54,7 @@
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="\u26a0 Token Expired"
+            android:text="⚠ Token expired"
             android:textColor="#F44336"
             android:textSize="16sp"
             android:textStyle="bold"
@@ -49,36 +63,44 @@
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Log into Claude Code to refresh your credentials, then run this command to get your new token:"
+            android:text="Claude — log into Claude Code, then read the refresh token:"
             android:textColor="#AAAAAA"
             android:textSize="13sp"
+            android:layout_marginBottom="8dp" />
+
+        <TextView
+            android:id="@+id/claude_command"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="python3 -c &quot;import json;print(json.load(open(&apos;$HOME/.claude/.credentials.json&apos;))[&apos;claudeAiOauth&apos;][&apos;refreshToken&apos;])&quot;"
+            android:textColor="#D97757"
+            android:textSize="11sp"
+            android:fontFamily="monospace"
+            android:background="#1A1A1A"
+            android:padding="12dp"
+            android:textIsSelectable="true"
+            android:layout_marginBottom="16dp" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Codex — same idea, from the Codex CLI credentials:"
+            android:textColor="#AAAAAA"
+            android:textSize="13sp"
+            android:layout_marginBottom="8dp" />
+
+        <TextView
+            android:id="@+id/codex_command"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="python3 -c &quot;import json;print(json.load(open(&apos;$HOME/.codex/auth.json&apos;))[&apos;tokens&apos;][&apos;refresh_token&apos;])&quot;"
+            android:textColor="#7DD3FC"
+            android:textSize="11sp"
+            android:fontFamily="monospace"
+            android:background="#1A1A1A"
+            android:padding="12dp"
+            android:textIsSelectable="true"
             android:layout_marginBottom="12dp" />
-
-        <TextView
-            android:id="@+id/mac_command"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="macOS:\nsecurity find-generic-password -s &apos;Claude Code-credentials&apos; -w | python3 -c &quot;\nimport sys, json\ncreds = json.load(sys.stdin)\nprint(creds.get(&apos;claudeAiOauth&apos;, {}).get(&apos;refreshToken&apos;, &apos;NOT FOUND&apos;))\n&quot;"
-            android:textColor="#6ee7b7"
-            android:textSize="11sp"
-            android:fontFamily="monospace"
-            android:background="#1A1A1A"
-            android:padding="12dp"
-            android:textIsSelectable="true"
-            android:layout_marginBottom="8dp" />
-
-        <TextView
-            android:id="@+id/linux_command"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="Linux:\npython3 -c &quot;\nimport json\nwith open(&apos;$HOME/.claude/.credentials.json&apos;) as f:\n    creds = json.load(f)\nprint(creds.get(&apos;claudeAiOauth&apos;, {}).get(&apos;refreshToken&apos;, &apos;NOT FOUND&apos;))\n&quot;"
-            android:textColor="#6ee7b7"
-            android:textSize="11sp"
-            android:fontFamily="monospace"
-            android:background="#1A1A1A"
-            android:padding="12dp"
-            android:textIsSelectable="true"
-            android:layout_marginBottom="8dp" />
 
         <TextView
             android:layout_width="wrap_content"
@@ -112,15 +134,7 @@
         android:textColor="#1A1A1A"
         android:textSize="16sp"
         android:textStyle="bold"
-        android:background="#6ee7b7"
-        android:layout_marginBottom="16dp" />
-
-    <TextView
-        android:id="@+id/status_text"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:textColor="#AAAAAA"
-        android:textSize="13sp"
-        android:visibility="gone" />
+        android:background="#6ee7b7" />
 
 </LinearLayout>
+</ScrollView>

@@ -3,7 +3,6 @@ package com.ghayyath.claudepulse
 import android.app.Activity
 import android.appwidget.AppWidgetManager
 import android.content.ComponentName
-import android.content.Context
 import android.content.Intent
 import android.os.Bundle
 import android.view.View
@@ -19,6 +18,8 @@ class SetupActivity : Activity() {
 
     private val executor = Executors.newSingleThreadExecutor()
 
+    private enum class Provider { CLAUDE, CODEX }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_setup)
@@ -28,148 +29,116 @@ class SetupActivity : Activity() {
         val statusText = findViewById<TextView>(R.id.status_text)
         val errorBanner = findViewById<LinearLayout>(R.id.error_banner)
 
-        // If already connected, validate the token in background
-        if (TokenManager.hasCredentials(this)) {
-            statusText.text = "Validating token..."
-            statusText.setTextColor(0xFFAAAAAA.toInt())
-            statusText.visibility = View.VISIBLE
-            connectButton.text = "Update Token"
+        statusText.visibility = View.VISIBLE
+        statusText.text = "Checking..."
+        statusText.setTextColor(0xFFAAAAAA.toInt())
 
-            // Show masked token as hint
-            val masked = TokenManager.getMaskedToken(this)
-            if (masked != null) {
-                tokenInput.hint = masked
-            }
-
-            val appContext = applicationContext
-            executor.execute {
-                val result = ApiClient.fetchUsage(appContext)
-                runOnUiThread {
-                    if (isFinishing) return@runOnUiThread
-                    when (result.error) {
-                        null -> {
-                            // Token is valid
-                            statusText.text = "Connected \u2714"
-                            statusText.setTextColor(0xFF4CAF50.toInt())
-                            errorBanner.visibility = View.GONE
-                        }
-                        "auth_error" -> {
-                            // Token is expired/invalid — show recovery banner
-                            showErrorState(statusText, errorBanner, tokenInput)
-                        }
-                        "rate_limited" -> {
-                            statusText.text = "Connected \u2714 Usage data temporarily unavailable (rate limited)"
-                            statusText.setTextColor(0xFF4CAF50.toInt())
-                            statusText.visibility = View.VISIBLE
-                            errorBanner.visibility = View.GONE
-                            val masked = TokenManager.getMaskedToken(this@SetupActivity)
-                            if (masked != null) tokenInput.hint = masked
-                        }
-                        else -> {
-                            // Network error or other — assume token is probably fine
-                            statusText.text = "Connected \u2714 Could not verify (offline?)"
-                            statusText.setTextColor(0xFFAAAAAA.toInt())
-                            statusText.visibility = View.VISIBLE
-                            errorBanner.visibility = View.GONE
-                            val masked = TokenManager.getMaskedToken(this@SetupActivity)
-                            if (masked != null) tokenInput.hint = masked
-                        }
-                    }
-                }
-            }
-        } else {
-            // Check if we have a cached auth_error (came from widget tap)
-            val prefs = getSharedPreferences("pulse_cache", Context.MODE_PRIVATE)
-            if (prefs.getBoolean("auth_error", false)) {
-                showErrorState(statusText, errorBanner, tokenInput)
+        val appContext = applicationContext
+        executor.execute {
+            val snapshot = UsageRepository.fetch(appContext)
+            runOnUiThread {
+                if (isFinishing) return@runOnUiThread
+                showStatus(statusText, errorBanner, snapshot)
+                connectButton.text = if (anyConnected()) "Update Token" else "Connect"
             }
         }
 
         connectButton.setOnClickListener {
             val token = tokenInput.text.toString().trim()
             if (token.isEmpty()) {
-                statusText.text = "Please paste a token"
+                statusText.text = "Paste a Claude or Codex token first"
                 statusText.setTextColor(0xFFF44336.toInt())
-                statusText.visibility = View.VISIBLE
                 return@setOnClickListener
             }
 
             connectButton.isEnabled = false
             statusText.text = "Connecting..."
             statusText.setTextColor(0xFFAAAAAA.toInt())
-            statusText.visibility = View.VISIBLE
-
-            val appContext = applicationContext
 
             executor.execute {
-                // Try as access token first
-                val directResult = ApiClient.fetchUsageWithAccessToken(appContext, token)
-
-                if (directResult.error == null) {
-                    TokenManager.saveAccessToken(appContext, token)
-                    ApiClient.cacheUsage(appContext, directResult)
-                    clearAuthError(appContext)
-
-                    runOnUiThread {
-                        if (isFinishing) return@runOnUiThread
-                        statusText.text = "Connected \u2714"
-                        statusText.setTextColor(0xFF4CAF50.toInt())
-                        connectButton.text = "Update Token"
-                        connectButton.isEnabled = true
-                        tokenInput.text.clear()
-                        errorBanner.visibility = View.GONE
-                        // Show masked token as hint
-                        val masked = TokenManager.getMaskedToken(appContext)
-                        if (masked != null) tokenInput.hint = masked
-                        triggerWidgetUpdate()
-                        ensurePeriodicRefresh()
-                    }
-                    return@execute
-                }
-
-                // Try as refresh token
-                TokenManager.saveRefreshToken(appContext, token)
-                val refreshResult = ApiClient.fetchUsage(appContext)
-
+                val provider = connect(token)
+                val snapshot = UsageRepository.fetch(appContext)
                 runOnUiThread {
                     if (isFinishing) return@runOnUiThread
-
-                    if (refreshResult.error == null) {
-                        ApiClient.cacheUsage(appContext, refreshResult)
-                        clearAuthError(appContext)
-                        statusText.text = "Connected \u2714"
-                        statusText.setTextColor(0xFF4CAF50.toInt())
-                        connectButton.text = "Update Token"
-                        connectButton.isEnabled = true
-                        tokenInput.text.clear()
-                        errorBanner.visibility = View.GONE
-                        val masked = TokenManager.getMaskedToken(appContext)
-                        if (masked != null) tokenInput.hint = masked
-                        triggerWidgetUpdate()
-                        ensurePeriodicRefresh()
-                    } else {
-                        statusText.text = "Invalid token. Check and try again."
+                    connectButton.isEnabled = true
+                    if (provider == null) {
+                        statusText.text = "Token not accepted by either Claude or Codex."
                         statusText.setTextColor(0xFFF44336.toInt())
-                        connectButton.isEnabled = true
-                        TokenManager.clearCredentials(appContext)
+                        return@runOnUiThread
                     }
+                    tokenInput.text.clear()
+                    connectButton.text = "Update Token"
+                    showStatus(statusText, errorBanner, snapshot)
+                    triggerWidgetUpdate()
+                    ensurePeriodicRefresh()
                 }
             }
         }
     }
 
-    private fun showErrorState(statusText: TextView, errorBanner: LinearLayout, tokenInput: EditText) {
-        statusText.text = "Token expired \u2014 paste a new one below"
-        statusText.setTextColor(0xFFF44336.toInt())
-        statusText.visibility = View.VISIBLE
-        errorBanner.visibility = View.VISIBLE
-        val masked = TokenManager.getMaskedToken(this)
-        if (masked != null) tokenInput.hint = masked
+    /**
+     * Tokens are self-identifying by prefix — Anthropic issues `sk-ant-…`,
+     * OpenAI `rt.…` for refresh tokens and a JWT for access tokens — so one
+     * input field is enough. Unknown shapes are simply tried on both.
+     */
+    private fun detect(token: String): Provider? = when {
+        token.startsWith("sk-ant-") -> Provider.CLAUDE
+        token.startsWith("rt.") || token.startsWith("eyJ") -> Provider.CODEX
+        else -> null
     }
 
-    private fun clearAuthError(context: Context) {
-        context.getSharedPreferences("pulse_cache", Context.MODE_PRIVATE)
-            .edit().putBoolean("auth_error", false).apply()
+    /** Returns the provider the token was accepted by, or null. */
+    private fun connect(token: String): Provider? {
+        val order = when (detect(token)) {
+            Provider.CLAUDE -> listOf(Provider.CLAUDE)
+            Provider.CODEX -> listOf(Provider.CODEX)
+            null -> listOf(Provider.CLAUDE, Provider.CODEX)
+        }
+        for (provider in order) {
+            if (tryConnect(provider, token)) return provider
+        }
+        return null
+    }
+
+    private fun tryConnect(provider: Provider, token: String): Boolean {
+        val context = applicationContext
+        val store = if (provider == Provider.CLAUDE) TokenStore.claude else TokenStore.codex
+
+        // An access token works straight away; a refresh token only after a round trip.
+        val direct = if (provider == Provider.CLAUDE) ClaudeApi.fetchWith(token) else CodexApi.fetchWith(token)
+        if (direct.isOk) {
+            store.saveAccessToken(context, token)
+            return true
+        }
+
+        val previous = store.snapshot(context)
+        store.saveRefreshToken(context, token)
+        val viaRefresh = if (provider == Provider.CLAUDE) ClaudeApi.fetch(context) else CodexApi.fetch(context)
+        if (viaRefresh.isOk) return true
+
+        // Never let a rejected token evict credentials that were working.
+        store.restore(context, previous)
+        return false
+    }
+
+    private fun anyConnected(): Boolean =
+        TokenStore.claude.hasCredentials(this) || TokenStore.codex.hasCredentials(this)
+
+    private fun showStatus(statusText: TextView, errorBanner: LinearLayout, snapshot: PulseSnapshot) {
+        statusText.text = "Claude: ${describe(snapshot.claude)}\nCodex: ${describe(snapshot.codex)}"
+        statusText.setTextColor(
+            if (snapshot.claude.isOk && snapshot.codex.isOk) 0xFF4CAF50.toInt() else 0xFFAAAAAA.toInt()
+        )
+        errorBanner.visibility = if (snapshot.needsAuth) View.VISIBLE else View.GONE
+    }
+
+    private fun describe(usage: ProviderUsage): String = when (usage.error) {
+        null -> "connected ✔  session ${usage.session.percent}% · weekly ${usage.weekly.percent}%"
+        Errors.AUTH -> "token expired — paste a new one"
+        Errors.NOT_CONNECTED -> "not connected"
+        Errors.RATE_LIMITED -> "connected ✔ (rate limited, retrying later)"
+        Errors.OFFLINE -> "could not verify (offline?)"
+        else -> usage.error ?: "unknown"
     }
 
     override fun onDestroy() {

@@ -1,62 +1,183 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!-- Two-row size: one row per provider, each carrying both bars and both reset
+     countdowns — session on the left, weekly on the right — so nothing is lost
+     when the widget is squeezed down to a single cell of height. -->
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:id="@+id/widget_root"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:orientation="horizontal"
+    android:orientation="vertical"
     android:background="@drawable/widget_background"
-    android:paddingStart="10dp"
-    android:paddingEnd="10dp"
-    android:gravity="center_vertical">
+    android:paddingStart="8dp"
+    android:paddingEnd="8dp"
+    android:paddingTop="3dp"
+    android:paddingBottom="3dp">
 
-    <TextView
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="S"
-        android:textColor="#80FFFFFF"
-        android:textSize="10sp"
-        android:textStyle="bold" />
-
-    <TextView
-        android:id="@+id/five_hour_pct"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="0%"
-        android:textColor="#6ee7b7"
-        android:textSize="13sp"
-        android:textStyle="bold"
-        android:layout_marginStart="4dp" />
-
-    <TextView
-        android:id="@+id/five_hour_reset"
-        android:layout_width="0dp"
-        android:layout_height="wrap_content"
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
         android:layout_weight="1"
-        android:text=""
-        android:textColor="#CCFFFFFF"
-        android:textSize="11sp"
-        android:textStyle="bold"
-        android:layout_marginStart="6dp"
-        android:ellipsize="end"
-        android:maxLines="1" />
+        android:orientation="horizontal"
+        android:gravity="center_vertical">
 
-    <TextView
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="W"
-        android:textColor="#80FFFFFF"
-        android:textSize="10sp"
-        android:textStyle="bold"
-        android:layout_marginStart="6dp" />
+        <TextView
+            android:layout_width="16dp"
+            android:layout_height="wrap_content"
+            android:text="CL"
+            android:textColor="#D97757"
+            android:textSize="9sp"
+            android:textStyle="bold" />
 
-    <TextView
-        android:id="@+id/weekly_pct"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="0%"
-        android:textColor="#6ee7b7"
-        android:textSize="13sp"
-        android:textStyle="bold"
-        android:layout_marginStart="4dp" />
+        <TextView
+            android:id="@+id/c_session_pct"
+            android:layout_width="28dp"
+            android:layout_height="wrap_content"
+            android:text="0%"
+            android:textColor="#6ee7b7"
+            android:textSize="11sp"
+            android:textStyle="bold"
+            android:gravity="end"
+            android:layout_marginStart="0dp" />
 
+        <ProgressBar
+            android:id="@+id/c_session_bar"
+            style="?android:attr/progressBarStyleHorizontal"
+            android:layout_width="0dp"
+            android:layout_height="5dp"
+            android:layout_weight="1"
+            android:max="100"
+            android:progress="0"
+            android:progressDrawable="@drawable/progress_bar_green"
+            android:layout_marginStart="4dp"
+            android:layout_marginEnd="4dp" />
+
+        <TextView
+            android:id="@+id/c_session_reset"
+            android:layout_width="40dp"
+            android:layout_height="wrap_content"
+            android:text=""
+            android:textColor="#B3FFFFFF"
+            android:textSize="9sp"
+            android:gravity="end"
+            android:maxLines="1"
+            android:ellipsize="end" />
+
+        <TextView
+            android:id="@+id/c_weekly_pct"
+            android:layout_width="28dp"
+            android:layout_height="wrap_content"
+            android:text="0%"
+            android:textColor="#6ee7b7"
+            android:textSize="11sp"
+            android:textStyle="bold"
+            android:gravity="end"
+            android:layout_marginStart="8dp" />
+
+        <ProgressBar
+            android:id="@+id/c_weekly_bar"
+            style="?android:attr/progressBarStyleHorizontal"
+            android:layout_width="0dp"
+            android:layout_height="5dp"
+            android:layout_weight="1"
+            android:max="100"
+            android:progress="0"
+            android:progressDrawable="@drawable/progress_bar_green"
+            android:layout_marginStart="4dp"
+            android:layout_marginEnd="4dp" />
+
+        <TextView
+            android:id="@+id/c_weekly_reset"
+            android:layout_width="40dp"
+            android:layout_height="wrap_content"
+            android:text=""
+            android:textColor="#B3FFFFFF"
+            android:textSize="9sp"
+            android:gravity="end"
+            android:maxLines="1"
+            android:ellipsize="end" />
+    </LinearLayout>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:orientation="horizontal"
+        android:gravity="center_vertical">
+
+        <TextView
+            android:layout_width="16dp"
+            android:layout_height="wrap_content"
+            android:text="CX"
+            android:textColor="#7DD3FC"
+            android:textSize="9sp"
+            android:textStyle="bold" />
+
+        <TextView
+            android:id="@+id/x_session_pct"
+            android:layout_width="28dp"
+            android:layout_height="wrap_content"
+            android:text="0%"
+            android:textColor="#6ee7b7"
+            android:textSize="11sp"
+            android:textStyle="bold"
+            android:gravity="end"
+            android:layout_marginStart="0dp" />
+
+        <ProgressBar
+            android:id="@+id/x_session_bar"
+            style="?android:attr/progressBarStyleHorizontal"
+            android:layout_width="0dp"
+            android:layout_height="5dp"
+            android:layout_weight="1"
+            android:max="100"
+            android:progress="0"
+            android:progressDrawable="@drawable/progress_bar_green"
+            android:layout_marginStart="4dp"
+            android:layout_marginEnd="4dp" />
+
+        <TextView
+            android:id="@+id/x_session_reset"
+            android:layout_width="40dp"
+            android:layout_height="wrap_content"
+            android:text=""
+            android:textColor="#B3FFFFFF"
+            android:textSize="9sp"
+            android:gravity="end"
+            android:maxLines="1"
+            android:ellipsize="end" />
+
+        <TextView
+            android:id="@+id/x_weekly_pct"
+            android:layout_width="28dp"
+            android:layout_height="wrap_content"
+            android:text="0%"
+            android:textColor="#6ee7b7"
+            android:textSize="11sp"
+            android:textStyle="bold"
+            android:gravity="end"
+            android:layout_marginStart="8dp" />
+
+        <ProgressBar
+            android:id="@+id/x_weekly_bar"
+            style="?android:attr/progressBarStyleHorizontal"
+            android:layout_width="0dp"
+            android:layout_height="5dp"
+            android:layout_weight="1"
+            android:max="100"
+            android:progress="0"
+            android:progressDrawable="@drawable/progress_bar_green"
+            android:layout_marginStart="4dp"
+            android:layout_marginEnd="4dp" />
+
+        <TextView
+            android:id="@+id/x_weekly_reset"
+            android:layout_width="40dp"
+            android:layout_height="wrap_content"
+            android:text=""
+            android:textColor="#B3FFFFFF"
+            android:textSize="9sp"
+            android:gravity="end"
+            android:maxLines="1"
+            android:ellipsize="end" />
+    </LinearLayout>
 </LinearLayout>

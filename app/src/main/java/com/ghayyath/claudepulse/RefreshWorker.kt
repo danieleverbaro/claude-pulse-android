@@ -13,18 +13,9 @@ class RefreshWorker(
 ) : CoroutineWorker(context, params) {
 
     override suspend fun doWork(): Result {
-        val data = ApiClient.fetchUsage(context)
+        val snapshot = UsageRepository.fetch(context)
 
-        // Cache auth error state so widget and SetupActivity can read it
-        val prefs = context.getSharedPreferences("pulse_cache", Context.MODE_PRIVATE)
-        if (data.error == "auth_error") {
-            prefs.edit().putBoolean("auth_error", true).putLong("auth_error_at", System.currentTimeMillis()).apply()
-        } else if (data.error == null) {
-            prefs.edit().putBoolean("auth_error", false).apply()
-            ApiClient.cacheUsage(context, data)
-        }
-
-        // Always trigger widget repaint — even on error, so "Updated Xm ago" stays current
+        // Always repaint, error or not, so "Xm ago" and the countdowns stay honest.
         val manager = AppWidgetManager.getInstance(context)
         val component = ComponentName(context, PulseWidget::class.java)
         val ids = manager.getAppWidgetIds(component)
@@ -36,6 +27,11 @@ class RefreshWorker(
             context.sendBroadcast(intent)
         }
 
-        return if (data.error == null) Result.success() else Result.retry()
+        // A dead or missing token will not fix itself on retry; a throttle or a
+        // dropped connection will.
+        val transient = listOf(snapshot.claude, snapshot.codex).any {
+            it.error != null && it.error != Errors.AUTH && it.error != Errors.NOT_CONNECTED
+        }
+        return if (transient) Result.retry() else Result.success()
     }
 }
