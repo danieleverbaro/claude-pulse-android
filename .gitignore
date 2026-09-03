@@ -15,6 +15,9 @@ local.properties
 # Keystore (never commit signing keys)
 *.keystore
 *.jks
+# Exception: fixed debug-only keystore, checked in on purpose so CI builds
+# share one signature and updates install in place (see build-debug.yml).
+!/debug.keystore
 
 # macOS
 .DS_Store

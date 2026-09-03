@@ -23,6 +23,18 @@ android {
     kotlinOptions {
         jvmTarget = "17"
     }
+
+    signingConfigs {
+        getByName("debug") {
+            // Fixed keystore (checked into the repo, see debug.keystore) so every
+            // CI build shares one signature and installs over the previous build
+            // instead of requiring an uninstall each time.
+            storeFile = file("../debug.keystore")
+            storePassword = "android"
+            keyAlias = "androiddebugkey"
+            keyPassword = "android"
+        }
+    }
 }
 
 dependencies {
