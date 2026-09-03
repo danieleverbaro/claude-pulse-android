@@ -244,46 +244,56 @@ class PulseWidget : AppWidgetProvider() {
         else -> COLOR_GREEN
     }
 
+    /** Parse an API reset timestamp (UTC, with or without an offset suffix) to a Date. */
+    private fun parseResetDate(isoTime: String): Date? {
+        val sdf = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss", Locale.US)
+        sdf.timeZone = TimeZone.getTimeZone("UTC")
+        val cleaned = isoTime.replace(Regex("[+-]\\d{2}:\\d{2}$"), "").replace("Z", "")
+        return sdf.parse(cleaned)
+    }
+
+    /** Wall-clock reset time in the device's local timezone, e.g. "14:32". */
+    private fun absTime(resetDate: Date): String {
+        val sdf = SimpleDateFormat("HH:mm", Locale.US) // no explicit timeZone -> device local
+        return sdf.format(resetDate)
+    }
+
     private fun formatResetTime(isoTime: String?): String {
         if (isoTime.isNullOrEmpty() || isoTime == "null") return ""
         return try {
-            val sdf = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss", Locale.US)
-            sdf.timeZone = TimeZone.getTimeZone("UTC")
-            val cleaned = isoTime.replace(Regex("[+-]\\d{2}:\\d{2}$"), "").replace("Z", "")
-            val resetDate = sdf.parse(cleaned) ?: return ""
+            val resetDate = parseResetDate(isoTime) ?: return ""
             val diffMs = resetDate.time - System.currentTimeMillis()
             if (diffMs <= 0) return "Resetting..."
             val hours = (diffMs / 3_600_000).toInt()
             val minutes = ((diffMs % 3_600_000) / 60_000).toInt()
-            if (hours >= 24) {
+            val relative = if (hours >= 24) {
                 val days = hours / 24
                 val remHours = hours % 24
                 "Resets in ${days}d ${remHours}h"
             } else {
                 "Resets in ${hours}h ${minutes}m"
             }
+            "$relative · ${absTime(resetDate)}"
         } catch (e: Exception) {
             ""
         }
     }
 
-    /** Compact "3h20m" / "1d 4h" form for the single-row layout — no width for "Resets in ...". */
+    /** Compact "3h20m · 14:32" form for the single-row layout — no width for "Resets in ...". */
     private fun formatResetTimeShort(isoTime: String?): String {
         if (isoTime.isNullOrEmpty() || isoTime == "null") return ""
         return try {
-            val sdf = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss", Locale.US)
-            sdf.timeZone = TimeZone.getTimeZone("UTC")
-            val cleaned = isoTime.replace(Regex("[+-]\\d{2}:\\d{2}$"), "").replace("Z", "")
-            val resetDate = sdf.parse(cleaned) ?: return ""
+            val resetDate = parseResetDate(isoTime) ?: return ""
             val diffMs = resetDate.time - System.currentTimeMillis()
             if (diffMs <= 0) return "resetting…"
             val hours = (diffMs / 3_600_000).toInt()
             val minutes = ((diffMs % 3_600_000) / 60_000).toInt()
-            if (hours >= 24) {
-                "↻ ${hours / 24}d ${hours % 24}h"
+            val relative = if (hours >= 24) {
+                "↻${hours / 24}d${hours % 24}h"
             } else {
-                "↻ ${hours}h ${minutes}m"
+                "↻${hours}h${minutes}m"
             }
+            "$relative · ${absTime(resetDate)}"
         } catch (e: Exception) {
             ""
         }
